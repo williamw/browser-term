@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Terminal</title>
+  <link rel="stylesheet" href="lib/xterm.css">
+  <link rel="stylesheet" href="terminal.css">
+</head>
+<body>
+  <div class="panel-container">
+    <div class="panel-header">
+      <span class="title">Terminal</span>
+      <div class="actions">
+        <button id="btn-popout" title="Open in full tab">Pop Out</button>
+        <button id="btn-new" title="New session">New</button>
+      </div>
+    </div>
+    <div id="terminal-container"></div>
+  </div>
+
+  <div id="connection-status">
+    <div class="status-message">Connecting...</div>
+    <div class="status-detail"></div>
+  </div>
+
+  <script src="lib/xterm.js"></script>
+  <script src="lib/xterm-addon-fit.js"></script>
+  <script src="lib/xterm-addon-web-links.js"></script>
+  <script src="terminal.js"></script>
+  <script>
+    const container = document.getElementById('terminal-container');
+    const status = document.getElementById('connection-status');
+
+    const manager = new TerminalManager(container, status, { mode: 'sidepanel' });
+    manager.init();
+
+    document.getElementById('btn-popout').addEventListener('click', () => {
+      manager.popOut();
+    });
+
+    document.getElementById('btn-new').addEventListener('click', () => {
+      manager.sessionId = null;
+      manager.destroy();
+      const newManager = new TerminalManager(container, status, { mode: 'sidepanel' });
+      newManager.init();
+    });
+  </script>
+</body>
+</html>

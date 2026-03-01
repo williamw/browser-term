@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Terminal Companion",
+  "version": "0.1.0",
+  "description": "Split-view terminal alongside documentation tabs via local WebSocket",
+  "permissions": ["sidePanel", "tabs"],
+  "action": {
+    "default_title": "Terminal"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+}

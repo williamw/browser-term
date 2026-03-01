@@ -1,0 +1,108 @@
+/* Terminal Companion — Shared Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow: hidden;
+}
+
+/* ── Side Panel Layout ────────────────────────────────────── */
+
+.panel-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+  flex-shrink: 0;
+}
+
+.panel-header .title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #cccccc;
+}
+
+.panel-header .actions {
+  display: flex;
+  gap: 6px;
+}
+
+.panel-header button {
+  background: #3c3c3c;
+  color: #cccccc;
+  border: none;
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.panel-header button:hover {
+  background: #505050;
+}
+
+/* ── Terminal Container ───────────────────────────────────── */
+
+#terminal-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Full-tab mode: no header, terminal fills viewport */
+.full-tab #terminal-container {
+  height: 100vh;
+}
+
+/* ── Connection Status Overlay ────────────────────────────── */
+
+#connection-status {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(30, 30, 30, 0.9);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#connection-status.visible {
+  display: flex;
+}
+
+#connection-status .status-message {
+  font-size: 16px;
+  color: #d4d4d4;
+}
+
+#connection-status .status-detail {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ── xterm.js overrides ───────────────────────────────────── */
+
+.xterm {
+  height: 100%;
+  padding: 4px;
+}

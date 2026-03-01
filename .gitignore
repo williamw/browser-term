@@ -1,0 +1,15 @@
+# Zig
+backend/zig-cache/
+backend/zig-out/
+backend/.zig-cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
