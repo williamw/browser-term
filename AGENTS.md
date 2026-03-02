@@ -4,7 +4,7 @@ Guidelines for AI agents working on this repository.
 
 ## Project Overview
 
-**browser-term** is a Chrome extension ("Terminal Companion") that embeds a live
+**Terminatab** is a Chrome extension that embeds a live
 terminal alongside browser tabs. A lightweight local server written in Zig manages
 PTY sessions and exposes them over WebSocket. The Chrome extension renders the
 terminal using [xterm.js](https://xtermjs.org/) and connects to that local server.
@@ -12,7 +12,7 @@ terminal using [xterm.js](https://xtermjs.org/) and connects to that local serve
 ## Repository Layout
 
 ```
-browser-term/
+terminatab/
 ├── backend/          # Zig backend server
 │   ├── build.zig     # Zig build configuration
 │   ├── build.zig.zon # Package manifest & dependency hashes
@@ -55,7 +55,7 @@ zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"
 zig build
 ```
 
-The binary is placed at `backend/zig-out/bin/browser-term-server`.
+The binary is placed at `backend/zig-out/bin/terminatab-server`.
 
 ### Extension
 
@@ -66,7 +66,7 @@ No build step. Load the `extension/` directory directly into Chrome (see below).
 ### Backend server
 
 ```bash
-./backend/zig-out/bin/browser-term-server
+./backend/zig-out/bin/terminatab-server
 ```
 
 Listens on `ws://localhost:7681`. Runs in the foreground; stop it with `Ctrl+C`.
@@ -76,7 +76,7 @@ Listens on `ws://localhost:7681`. Runs in the foreground; stop it with `Ctrl+C`.
 1. Open `chrome://extensions`.
 2. Enable **Developer mode** (toggle, top-right).
 3. Click **Load unpacked** and select the `extension/` directory.
-4. Click the **Terminal** icon in the toolbar to open the side panel or full-tab terminal.
+4. Click the **Terminatab** icon in the toolbar to open the side panel or full-tab terminal.
 
 ## Testing
 

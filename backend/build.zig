@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
 
     // Main executable
     const exe = b.addExecutable(.{
-        .name = "browser-term-server",
+        .name = "terminatab-server",
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,

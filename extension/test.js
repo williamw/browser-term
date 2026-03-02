@@ -1,4 +1,4 @@
-// Terminal Companion — Extension Unit Tests
+// Terminatab — Extension Unit Tests
 // These test the protocol helpers, URL detection, and reconnect logic.
 
 const results = [];

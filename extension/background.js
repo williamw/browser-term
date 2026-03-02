@@ -1,4 +1,4 @@
-// Terminal Companion — Background Service Worker
+// Terminatab — Background Service Worker
 // Handles context-aware icon click: side panel on regular pages, full tab on new tab pages.
 
 const NEW_TAB_PATTERNS = [

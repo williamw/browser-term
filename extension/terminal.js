@@ -1,4 +1,4 @@
-// Terminal Companion — Shared Terminal + WebSocket Logic
+// Terminatab — Shared Terminal + WebSocket Logic
 // Used by both sidepanel.html and terminal.html.
 
 const WS_URL = 'ws://127.0.0.1:7681';
@@ -128,7 +128,7 @@ class TerminalManager {
     try {
       this.ws = new WebSocket(WS_URL);
     } catch (e) {
-      this.showStatus('Start the companion app', 'Could not connect to ' + WS_URL);
+      this.showStatus('Start the Terminatab server', 'Could not connect to ' + WS_URL);
       this.scheduleReconnect();
       return;
     }
@@ -183,7 +183,7 @@ class TerminalManager {
     if (this._reconnecting) return;
 
     if (this.backoff.exhausted) {
-      this.showStatus('Start the companion app', 'Server not reachable at ' + WS_URL);
+      this.showStatus('Start the Terminatab server', 'Server not reachable at ' + WS_URL);
       return;
     }
 

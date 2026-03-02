@@ -12,7 +12,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    std.log.info("browser-term-server starting on ws://{s}:{d}", .{ ADDRESS, PORT });
+    std.log.info("terminatab-server starting on ws://{s}:{d}", .{ ADDRESS, PORT });
 
     var manager = session_mod.SessionManager.init(allocator);
     defer manager.deinit();

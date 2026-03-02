@@ -1,4 +1,4 @@
-# broweser-term
+# Terminatab
 
 A Chrome extension that embeds a live terminal 
 alongside your browser tabs. Powered by a 
@@ -15,8 +15,8 @@ to manage PTY sessions under the hood.​​​​​​​​​​​​​​
 ### 1. Clone the repo
 
 ```
-git clone https://github.com/williamw/browser-term.git
-cd browser-term
+git clone https://github.com/williamw/terminatab.git
+cd terminatab
 ```
 
 ### 2. Build and run the backend
@@ -25,7 +25,7 @@ cd browser-term
 cd backend
 zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"
 zig build
-./zig-out/bin/browser-term-server
+./zig-out/bin/terminatab-server
 ```
 
 The first command fetches the WebSocket dependency and updates `build.zig.zon` with
@@ -44,7 +44,7 @@ Ctrl+C. Keep this terminal window open while using the extension.
 
 ### 4. Use it
 
-- **Side panel mode**: Click the Terminal Companion icon on any regular web page.
+- **Side panel mode**: Click the Terminatab icon on any regular web page.
   The terminal opens in Chrome's side panel alongside your current tab.
 - **Full tab mode**: Click the icon on a new tab page, or bookmark
   `chrome-extension://<YOUR_EXTENSION_ID>/terminal.html` for quick access.
