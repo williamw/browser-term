@@ -1,8 +1,9 @@
-# Terminal Companion
+# broweser-term
 
-A local companion server that manages terminal sessions (PTY) and exposes them to
-Chrome via a browser extension. Split-view a terminal alongside documentation tabs
-without leaving Chrome.
+A Chrome extension that embeds a live terminal 
+alongside your browser tabs. Powered by a 
+lightweight local server built on libghostty 
+to manage PTY sessions under the hood.​​​​​​​​​​​​​​​​
 
 ## Prerequisites
 
