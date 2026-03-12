@@ -31,6 +31,19 @@ On macOS, the server runs as a menu bar app — look for the **>_** icon in the
 menu bar. It daemonizes automatically (the shell returns immediately). Click the
 icon and choose **Quit Terminatab** to stop it.
 
+To build a proper macOS `.app` bundle (with Finder integration and an app icon):
+
+```
+zig build app
+open zig-out/Terminatab.app
+```
+
+To view server logs on macOS:
+
+```
+log stream --predicate 'process == "terminatab-server"' --level info
+```
+
 On Linux, the server runs as a foreground process — it logs to stdout and you
 stop it with Ctrl+C.
 

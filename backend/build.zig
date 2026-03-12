@@ -33,6 +33,22 @@ pub fn build(b: *std.Build) void {
     }
     b.installArtifact(exe);
 
+    // macOS .app bundle
+    if (exe.rootModuleTarget().os.tag == .macos) {
+        const app_step = b.step("app", "Build macOS .app bundle");
+        app_step.dependOn(b.getInstallStep());
+
+        const bundle = b.addSystemCommand(&.{
+            "/bin/sh", "-c",
+            \\mkdir -p zig-out/Terminatab.app/Contents/MacOS
+            \\mkdir -p zig-out/Terminatab.app/Contents/Resources
+            \\cp zig-out/bin/terminatab-server zig-out/Terminatab.app/Contents/MacOS/
+            \\cp resources/Info.plist zig-out/Terminatab.app/Contents/
+            \\cp resources/AppIcon.icns zig-out/Terminatab.app/Contents/Resources/
+        });
+        app_step.dependOn(&bundle.step);
+    }
+
     // Run step
     const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());

@@ -17,7 +17,7 @@ terminatab/
 ├── backend/          # Zig backend server
 │   ├── build.zig     # Zig build configuration
 │   ├── build.zig.zon # Package manifest & dependency hashes
-│   ├── resources/    # Menu bar icon template PNGs (macOS)
+│   ├── resources/    # Menu bar icon PNGs, Info.plist, AppIcon.icns (macOS)
 │   └── src/
 │       ├── main.zig        # Server entry point; WebSocket listener
 │       ├── macos_app.m     # macOS menu bar app (ObjC; NSStatusItem)
@@ -62,6 +62,17 @@ zig build
 
 The binary is placed at `backend/zig-out/bin/terminatab-server`.
 
+To build a macOS `.app` bundle:
+
+```bash
+cd backend
+zig build app
+```
+
+This produces `backend/zig-out/Terminatab.app/` — a proper app bundle with
+`LSUIElement=true` (no dock icon), an app icon, and the server binary. The
+bundle is assembled by a shell command in the `app` build step; see `build.zig`.
+
 > **Upgrading websocket.zig**: Run `zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"` to update the pinned hash in `build.zig.zon`.
 
 ### Extension
@@ -81,6 +92,12 @@ Listens on `ws://localhost:7681`.
 On macOS the server daemonizes into a menu bar app (no dock icon). The `>_` icon
 appears in the menu bar; click it and choose **Quit Terminatab** to stop. On
 Linux it runs in the foreground; stop it with `Ctrl+C`.
+
+To view server logs on macOS:
+
+```bash
+log stream --predicate 'process == "terminatab-server"' --level info
+```
 
 ### Chrome extension
 
