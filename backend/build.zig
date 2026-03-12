@@ -46,6 +46,7 @@ pub fn build(b: *std.Build) void {
             \\cp resources/Info.plist zig-out/Terminatab.app/Contents/
             \\cp resources/AppIcon.icns zig-out/Terminatab.app/Contents/Resources/
         });
+        bundle.step.dependOn(b.getInstallStep());
         app_step.dependOn(&bundle.step);
     }
 

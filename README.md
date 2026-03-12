@@ -6,6 +6,7 @@ lightweight local Zig server that manages PTY sessions over WebSocket.
 ## Prerequisites
 
 - [Zig 0.14.x](https://ziglang.org/download/) (for building the backend)
+- GNU Make (included on macOS and most Linux distros)
 - Google Chrome (for the extension)
 
 ## Quick Start
@@ -17,26 +18,35 @@ git clone https://github.com/williamw/terminatab.git
 cd terminatab
 ```
 
-### 2. Build and run the backend
+### 2. Build everything
 
 ```
-cd backend
-zig build
-./zig-out/bin/terminatab-server
+make
 ```
 
-The server starts on `ws://localhost:7681`.
+This builds the macOS `.app` bundle and packages the Chrome extension into a
+`.zip` file, both in the project root:
 
-On macOS, the server runs as a menu bar app — look for the **>_** icon in the
-menu bar. It daemonizes automatically (the shell returns immediately). Click the
-icon and choose **Quit Terminatab** to stop it.
+- `Terminatab.app` — macOS menu bar app
+- `terminatab-extension.zip` — Chrome extension (ready for Web Store upload)
 
-To build a proper macOS `.app` bundle (with Finder integration and an app icon):
+You can also build them individually:
 
 ```
-zig build app
-open zig-out/Terminatab.app
+make app        # just the macOS app
+make extension  # just the Chrome extension zip
+make clean      # remove build artifacts
 ```
+
+### 3. Run the backend
+
+```
+open Terminatab.app
+```
+
+The server starts on `ws://localhost:7681` and runs as a menu bar app — look for
+the **>_** icon in the menu bar. It daemonizes automatically (the shell returns
+immediately). Click the icon and choose **Quit Terminatab** to stop it.
 
 To view server logs on macOS:
 
@@ -44,22 +54,34 @@ To view server logs on macOS:
 log stream --predicate 'process == "terminatab-server"' --level info
 ```
 
-On Linux, the server runs as a foreground process — it logs to stdout and you
-stop it with Ctrl+C.
+On Linux, build and run directly:
 
-### 3. Load the Chrome extension
+```
+cd backend && zig build run
+```
+
+The server runs as a foreground process — it logs to stdout and you stop it with
+Ctrl+C.
+
+### 4. Install the Chrome extension
+
+**From the Chrome Web Store** (recommended): Upload `terminatab-extension.zip`
+to the [Chrome Developer Dashboard](https://chrome.google.com/webstore/devconsole)
+and install from your listing.
+
+**Load unpacked** (for development):
 
 1. Open Chrome and navigate to `chrome://extensions`
 2. Enable **Developer mode** (toggle in the top-right)
 3. Click **Load unpacked**
 4. Select the `extension/` directory from this repo
 
-### 4. Use it
+### 5. Use it
 
 - **Side panel**: Click the Terminatab icon on any `http://` or `https://` page.
   The terminal opens in Chrome's side panel alongside your current tab.
 - **Full tab**: Click the icon on any other page (new tab, `chrome://` pages,
-  etc.) to open a terminal in a new tab.
+  etc.) to open a terminal in the current tab.
 - **Pop out**: Click the pop-out button in the side panel to move the terminal
   to its own full tab.
 

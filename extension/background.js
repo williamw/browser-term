@@ -6,6 +6,6 @@ chrome.action.onClicked.addListener(async (tab) => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     chrome.sidePanel.open({ tabId: tab.id });
   } else {
-    chrome.tabs.create({ url: chrome.runtime.getURL('terminal.html') });
+    chrome.tabs.update(tab.id, { url: chrome.runtime.getURL('terminal.html') });
   }
 });
