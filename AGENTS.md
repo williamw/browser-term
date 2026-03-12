@@ -29,6 +29,8 @@ terminatab/
     ├── sidepanel.html      # Side-panel terminal page
     ├── terminal.css
     ├── terminal.js         # Shared xterm.js + WebSocket logic
+    ├── sidepanel-init.js   # Sidepanel bootstrap script
+    ├── terminal-init.js    # Full-tab terminal bootstrap script
     ├── test.html           # In-browser test runner
     ├── test.js             # Extension unit tests
     └── lib/                # Vendored dependencies (xterm.js, etc.)
@@ -40,7 +42,7 @@ terminatab/
 |---|---|
 | Backend | Zig 0.14.x |
 | Backend dependency | [websocket.zig](https://github.com/karlseguin/websocket.zig) (zig-0.14 branch) |
-| System dependency | `libutil` (Linux) — provides `forkpty()` |
+| System dependency | `libutil` (Linux) / `util.h` (macOS) — provides `forkpty()` |
 | Frontend | Vanilla JavaScript, Chrome Manifest v3 |
 | Terminal renderer | xterm.js (vendored in `extension/lib/`) |
 
@@ -50,12 +52,12 @@ terminatab/
 
 ```bash
 cd backend
-# Fetch the WebSocket dependency (only needed once; updates build.zig.zon)
-zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"
 zig build
 ```
 
 The binary is placed at `backend/zig-out/bin/terminatab-server`.
+
+> **Upgrading websocket.zig**: Run `zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"` to update the pinned hash in `build.zig.zon`.
 
 ### Extension
 
@@ -116,3 +118,38 @@ are displayed inline on the page.
 - The `build.zig.zon` file contains a pinned hash for the `websocket.zig`
   dependency. Re-run `zig fetch --save ...` if you need to change the dependency
   version; commit the updated `build.zig.zon`.
+
+## Architecture Notes
+
+### WebSocket server (`main.zig`)
+
+The server uses [websocket.zig](https://github.com/karlseguin/websocket.zig)'s
+`websocket.Server(WsHandler)`. The `WsHandler` struct must implement:
+
+- `init(handshake, conn, ctx) !WsHandler` — called on each new WebSocket connection
+- `clientMessage(self, data) !void` — called for each incoming text frame
+- `close(self) void` — called when the connection closes
+
+A shared `Context` struct (holding `*SessionManager` and `allocator`) is passed to
+`server.listen(&ctx)` and forwarded to each handler's `init`.
+
+### PTY read loop
+
+Each WebSocket connection spawns a dedicated thread (`ptyReadLoop`) after a
+`new_session` or `attach` message creates/binds a session. The thread:
+
+1. Reads from `session.pty.read()` in a loop
+2. Serializes output via `protocol.serializeServerMessage(.output, ...)`
+3. Sends it over the WebSocket via `conn.write(json)`
+4. Exits when the session ends, WebSocket closes, or `should_stop` is set
+
+### Handler generics
+
+`ws_handler.Handler(Conn)` is generic over the connection type. Any type with a
+`write([]const u8) !void` method works. In production it uses `websocket.Conn`;
+tests use `MockConn` (an `ArrayList`-backed stub defined in `ws_handler.zig`).
+
+### macOS PTY support
+
+`forkpty()` lives in different headers per platform: `util.h` on macOS, `pty.h` on
+Linux. This is handled via a compile-time `@cImport` conditional in `pty.zig`.

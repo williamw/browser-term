@@ -1,9 +1,9 @@
 # Terminatab
 
-A Chrome extension that embeds a live terminal 
-alongside your browser tabs. Powered by a 
-lightweight local server built on libghostty 
-to manage PTY sessions under the hood.​​​​​​​​​​​​​​​​
+A Chrome extension that embeds a live terminal
+alongside your browser tabs. Powered by a
+lightweight local Zig server that manages PTY
+sessions over WebSocket.
 
 ## Prerequisites
 
@@ -23,14 +23,11 @@ cd terminatab
 
 ```
 cd backend
-zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"
 zig build
 ./zig-out/bin/terminatab-server
 ```
 
-The first command fetches the WebSocket dependency and updates `build.zig.zon` with
-the correct hash. You only need to run it once. The server starts on
-`ws://localhost:7681`.
+The server starts on `ws://localhost:7681`.
 
 The server runs as a foreground process — it logs to stdout and you stop it with
 Ctrl+C. Keep this terminal window open while using the extension.
