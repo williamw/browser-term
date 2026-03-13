@@ -5,49 +5,52 @@ Guidelines for AI agents working on this repository.
 ## Project Overview
 
 **Terminatab** is a Chrome extension that puts a terminal in your browser. A
-lightweight local server written in Zig manages PTY sessions and exposes them
+lightweight local server written in Swift manages PTY sessions and exposes them
 over WebSocket. The Chrome extension renders the terminal using
-[xterm.js](https://xtermjs.org/) and connects to that local server. On macOS,
-the backend runs as a menu bar app.
+[xterm.js](https://xtermjs.org/) and connects to that local server. The backend
+runs as a macOS menu bar app.
 
 ## Repository Layout
 
 ```
 terminatab/
-├── backend/          # Zig backend server
-│   ├── build.zig     # Zig build configuration
-│   ├── build.zig.zon # Package manifest & dependency hashes
-│   ├── resources/    # Menu bar icon PNGs, Info.plist, AppIcon.icns (macOS)
-│   └── src/
-│       ├── main.zig        # Server entry point; WebSocket listener
-│       ├── macos_app.m     # macOS menu bar app (ObjC; NSStatusItem)
-│       ├── protocol.zig    # Wire message definitions
-│       ├── pty.zig         # PTY session lifecycle
-│       ├── session.zig     # Session manager (maps connection → PTY)
-│       └── ws_handler.zig  # WebSocket upgrade & frame handling
-└── extension/        # Chrome extension (Manifest v3)
-    ├── manifest.json
-    ├── background.js       # Service worker; routes icon clicks
-    ├── terminal.html       # Full-tab terminal page
-    ├── sidepanel.html      # Side-panel terminal page
-    ├── terminal.css
-    ├── terminal.js         # Terminal + WebSocket logic
-    ├── sidepanel-init.js   # Sidepanel bootstrap script
-    ├── terminal-init.js    # Full-tab terminal bootstrap script
-    ├── images/             # Extension icons (16/32/48/128 PNG + SVG)
-    ├── test.html           # In-browser test runner
-    ├── test.js             # Extension unit tests
-    └── lib/                # Vendored dependencies (xterm.js, etc.)
+├── swift/            # Swift backend server (Swift Package Manager)
+│   ├── Package.swift
+│   ├── Resources/          # Info.plist, AppIcon.icns, menu bar icon PNGs
+│   ├── Sources/Terminatab/
+│   │   ├── App.swift              # macOS menu bar app (AppKit, NSStatusItem)
+│   │   ├── Protocol.swift         # Wire message definitions (JSON)
+│   │   ├── PTY.swift              # PTY session lifecycle (forkpty)
+│   │   ├── SessionManager.swift   # Session manager (maps connection → PTY)
+│   │   ├── WebSocketConnection.swift  # Per-connection WebSocket handler
+│   │   └── WebSocketServer.swift  # WebSocket listener (Network.framework)
+│   └── Tests/TerminatabTests/
+│       ├── ProtocolTests.swift
+│       ├── PTYTests.swift
+│       └── SessionManagerTests.swift
+├── extension/        # Chrome extension (Manifest v3)
+│   ├── manifest.json
+│   ├── background.js       # Service worker; routes icon clicks
+│   ├── terminal.html       # Full-tab terminal page
+│   ├── sidepanel.html      # Side-panel terminal page
+│   ├── terminal.css
+│   ├── terminal.js         # Terminal + WebSocket logic
+│   ├── sidepanel-init.js   # Sidepanel bootstrap script
+│   ├── terminal-init.js    # Full-tab terminal bootstrap script
+│   ├── images/             # Extension icons (16/32/48/128 PNG + SVG)
+│   ├── test.html           # In-browser test runner
+│   ├── test.js             # Extension unit tests
+│   └── lib/                # Vendored dependencies (xterm.js, etc.)
+└── Makefile          # Build orchestration
 ```
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| Backend | Zig 0.14.x |
-| Backend dependency | [websocket.zig](https://github.com/karlseguin/websocket.zig) (zig-0.14 branch) |
-| System dependency | `libutil` (Linux) / `util.h` (macOS) — provides `forkpty()` |
-| macOS GUI | Objective-C (AppKit) — compiled conditionally via `build.zig` |
+| Backend | Swift 6.x (Swift Package Manager) |
+| Networking | Network.framework (NWListener, NWConnection) |
+| macOS GUI | AppKit (NSApplication, NSStatusItem) |
 | Frontend | Vanilla JavaScript, Chrome Manifest v3 |
 | Terminal renderer | xterm.js (vendored in `extension/lib/`) |
 
@@ -56,24 +59,17 @@ terminatab/
 ### Backend
 
 ```bash
-cd backend
-zig build
+cd swift && swift build -c release
 ```
-
-The binary is placed at `backend/zig-out/bin/terminatab-server`.
 
 To build a macOS `.app` bundle:
 
 ```bash
-cd backend
-zig build app
+make app
 ```
 
-This produces `backend/zig-out/Terminatab.app/` — a proper app bundle with
-`LSUIElement=true` (no dock icon), an app icon, and the server binary. The
-bundle is assembled by a shell command in the `app` build step; see `build.zig`.
-
-> **Upgrading websocket.zig**: Run `zig fetch --save "git+https://github.com/karlseguin/websocket.zig#zig-0.14"` to update the pinned hash in `build.zig.zon`.
+This produces `Terminatab.app/` in the project root — a proper app bundle with
+`LSUIElement=true` (no dock icon), an app icon, and the server binary.
 
 ### Extension
 
@@ -84,19 +80,17 @@ No build step. Load the `extension/` directory directly into Chrome (see below).
 ### Backend server
 
 ```bash
-./backend/zig-out/bin/terminatab-server
+open Terminatab.app
 ```
 
-Listens on `ws://localhost:7681`.
+Listens on `ws://localhost:7681`. The server runs as a macOS menu bar app (no
+dock icon). The `>_` icon appears in the menu bar; click it and choose **Quit
+Terminatab** to stop.
 
-On macOS the server daemonizes into a menu bar app (no dock icon). The `>_` icon
-appears in the menu bar; click it and choose **Quit Terminatab** to stop. On
-Linux it runs in the foreground; stop it with `Ctrl+C`.
-
-To view server logs on macOS:
+To view server logs:
 
 ```bash
-log stream --predicate 'process == "terminatab-server"' --level info
+log stream --predicate 'process == "Terminatab"' --level info
 ```
 
 ### Chrome extension
@@ -112,12 +106,16 @@ log stream --predicate 'process == "terminatab-server"' --level info
 ### Backend unit tests
 
 ```bash
-cd backend
-zig build test
+cd swift && swift test
 ```
 
-Tests are defined inline (Zig `test` blocks) in each `src/*.zig` file. The build
-system runs them all via `zig build test`.
+Or via Make:
+
+```bash
+make test
+```
+
+Tests are in `swift/Tests/TerminatabTests/`. XCTest is used.
 
 ### Extension tests
 
@@ -126,8 +124,8 @@ are displayed inline on the page.
 
 ## Code Conventions
 
-- **Zig**: Follow the style already in `src/`. Prefer explicit error handling (`try`
-  / `catch`); avoid `unreachable` except where truly invariant.
+- **Swift**: Follow the style already in `Sources/`. Use Swift concurrency
+  (async/await, AsyncStream). Prefer structured concurrency where possible.
 - **JavaScript**: Vanilla ES modules; no transpilation step. Keep logic in
   `terminal.js`; keep `background.js` minimal (service-worker constraints).
 - **No linter configuration exists** for the extension. Match the surrounding code
@@ -137,62 +135,42 @@ are displayed inline on the page.
 
 ## Making Changes
 
-- Backend changes almost always require `zig build` and `zig build test` to verify.
+- Backend changes require `swift build` and `swift test` to verify.
 - Extension changes can be tested by reloading the unpacked extension in Chrome
   (`chrome://extensions` → reload button) and opening `extension/test.html`.
-- Protocol changes (`protocol.zig`) must be reflected in both the backend handler
+- Protocol changes (`Protocol.swift`) must be reflected in both the backend handler
   and the extension's `terminal.js`.
-- The `build.zig.zon` file contains a pinned hash for the `websocket.zig`
-  dependency. Re-run `zig fetch --save ...` if you need to change the dependency
-  version; commit the updated `build.zig.zon`.
 
 ## Architecture Notes
 
-### WebSocket server (`main.zig`)
+### WebSocket server (`WebSocketServer.swift`)
 
-The server uses [websocket.zig](https://github.com/karlseguin/websocket.zig)'s
-`websocket.Server(WsHandler)`. The `WsHandler` struct must implement:
+Uses Network.framework's `NWListener` to accept TCP connections on port 7681.
+Each connection is upgraded to WebSocket via `NWProtocolWebSocket.Options`. The
+listener dispatches new connections to `WebSocketConnection` instances.
 
-- `init(handshake, conn, ctx) !WsHandler` — called on each new WebSocket connection
-- `clientMessage(self, data) !void` — called for each incoming text frame
-- `close(self) void` — called when the connection closes
+### WebSocket connection (`WebSocketConnection.swift`)
 
-A shared `Context` struct (holding `*SessionManager` and `allocator`) is passed to
-`server.listen(&ctx)` and forwarded to each handler's `init`.
+Each connection runs a receive loop using `NWConnection.receive()`. Incoming
+messages are decoded via `Protocol.swift` and dispatched to create/attach/resize
+PTY sessions.
 
-### PTY read loop
+### PTY management (`PTY.swift`)
 
-Each WebSocket connection spawns a dedicated thread (`ptyReadLoop`) after a
-`new_session` or `attach` message creates/binds a session. The thread:
+Uses `forkpty()` from `util.h` to spawn shell processes. PTY output is read in
+an async loop and forwarded to the WebSocket connection. Each PTY manages its
+own file descriptor lifecycle.
 
-1. Reads from `session.pty.read()` in a loop
-2. Serializes output via `protocol.serializeServerMessage(.output, ...)`
-3. Sends it over the WebSocket via `conn.write(json)`
-4. Exits when the session ends, WebSocket closes, or `should_stop` is set
+### Session manager (`SessionManager.swift`)
 
-### Handler generics
+Maps session IDs to PTY instances. Handles session creation, attachment, and
+cleanup. Sessions persist across WebSocket reconnections until explicitly closed.
 
-`ws_handler.Handler(Conn)` is generic over the connection type. Any type with a
-`write([]const u8) !void` method works. In production it uses `websocket.Conn`;
-tests use `MockConn` (an `ArrayList`-backed stub defined in `ws_handler.zig`).
+### macOS menu bar app (`App.swift`)
 
-### macOS menu bar app (`macos_app.m`)
-
-On macOS, `main()` calls `macos_app_main()` (defined in `macos_app.m`) instead of
-running the server directly. The ObjC code:
-
-1. Forks and daemonizes (parent exits, child detaches from terminal)
-2. Creates an `NSApplication` with accessory activation policy (no dock icon)
-3. Sets up an `NSStatusItem` with a programmatically-drawn `>_` template icon
-4. Starts the WebSocket server on a background thread via `dispatch_async`
-
-The `.m` file is only compiled on macOS targets (`build.zig` conditional). On
-Linux, `main()` falls through to `serverMain()` which runs the server directly.
-
-### macOS PTY support
-
-`forkpty()` lives in different headers per platform: `util.h` on macOS, `pty.h` on
-Linux. This is handled via a compile-time `@cImport` conditional in `pty.zig`.
+Creates an `NSApplication` with accessory activation policy (no dock icon). Sets
+up an `NSStatusItem` with a template menu bar icon. Starts the WebSocket server
+on launch. The app lifecycle is managed by AppKit's run loop.
 
 ### Extension icon click behavior
 

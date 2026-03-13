@@ -1,12 +1,13 @@
 # Terminatab
 
 A Chrome extension that puts a terminal in your browser. Powered by a
-lightweight local Zig server that manages PTY sessions over WebSocket.
+lightweight local Swift server that manages PTY sessions over WebSocket.
 
 ## Prerequisites
 
-- [Zig 0.14.x](https://ziglang.org/download/) (for building the backend)
-- GNU Make (included on macOS and most Linux distros)
+- Swift 6.x / Xcode 16+ (for building the backend)
+- macOS 15+
+- GNU Make
 - Google Chrome (for the extension)
 
 ## Quick Start
@@ -51,17 +52,8 @@ immediately). Click the icon and choose **Quit Terminatab** to stop it.
 To view server logs on macOS:
 
 ```
-log stream --predicate 'process == "terminatab-server"' --level info
+log stream --predicate 'process == "Terminatab"' --level info
 ```
-
-On Linux, build and run directly:
-
-```
-cd backend && zig build run
-```
-
-The server runs as a foreground process — it logs to stdout and you stop it with
-Ctrl+C.
 
 ### 4. Install the Chrome extension
 
@@ -92,8 +84,13 @@ Each tab/panel gets its own independent shell session.
 ### Run backend tests
 
 ```
-cd backend
-zig build test
+make test
+```
+
+Or directly:
+
+```
+cd swift && swift test
 ```
 
 ### Run extension tests
@@ -104,18 +101,18 @@ Open `extension/test.html` in Chrome after loading the extension.
 
 ```
 ┌─────────────────────┐       WebSocket        ┌──────────────────────┐
-│   Chrome Extension   │ ◄──────────────────► │   Zig Backend         │
-│  • xterm.js UI       │    localhost:7681     │  • PTY management     │
-│  • Side panel        │                       │  • WebSocket server   │
-│  • Full tab          │                       │  • Shell spawning     │
-│                      │                       │  • Menu bar app (mac) │
+│   Chrome Extension   │ ◄──────────────────► │   Swift Backend        │
+│  • xterm.js UI       │    localhost:7681     │  • PTY management      │
+│  • Side panel        │                       │  • WebSocket server    │
+│  • Full tab          │                       │  • Shell spawning      │
+│                      │                       │  • Menu bar app        │
 └─────────────────────┘                        └──────────────────────┘
 ```
 
-The Zig backend spawns PTY sessions and serves them over WebSocket. The Chrome
-extension renders the terminal using xterm.js and connects to the backend. Each
-tab or panel gets its own independent shell session. On macOS, the backend runs
-as a menu bar app with no dock icon.
+The Swift backend spawns PTY sessions and serves them over WebSocket using
+Network.framework. The Chrome extension renders the terminal using xterm.js and
+connects to the backend. Each tab or panel gets its own independent shell
+session. The backend runs as a macOS menu bar app with no dock icon.
 
 ## License
 

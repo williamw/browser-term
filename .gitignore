@@ -1,9 +1,6 @@
-# Zig
-backend/zig-cache/
-backend/zig-out/
-backend/.zig-cache/
-.zig-cache/
-/src/
+# Swift
+swift/.build/
+swift/Package.resolved
 
 # OS
 .DS_Store
@@ -15,3 +12,7 @@ Thumbs.db
 *~
 .vscode/
 .idea/
+
+# Build artifacts
+Terminatab.app/
+terminatab-extension.zip
