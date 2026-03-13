@@ -79,6 +79,27 @@ and install from your listing.
 
 Each tab/panel gets its own independent shell session.
 
+### 6. MCP Integration (optional)
+
+Terminatab includes a [Model Context Protocol](https://modelcontextprotocol.io/)
+server that lets AI tools like Claude Code interact with your Chrome tabs.
+
+**Tools available:**
+
+- `list_tabs` — list all open Chrome tabs
+- `screenshot` — capture a screenshot of any tab
+- `evaluate_javascript` — run JavaScript in a tab's page context
+- `get_page_content` — get the full HTML of a tab
+
+**Setup:**
+
+1. Click the **>_** menu bar icon and choose **Enable DevTools MCP**.
+2. Click **Copy MCP Config** from the same menu.
+3. Paste the config into your Claude Code MCP settings.
+
+The MCP server runs on `http://localhost:7682/mcp`. Toggle it on/off from the
+menu bar — the menu item shows how many tabs are attached when enabled.
+
 ## Development
 
 ### Run backend tests
@@ -100,19 +121,30 @@ Open `extension/test.html` in Chrome after loading the extension.
 ## Architecture
 
 ```
-┌─────────────────────┐       WebSocket        ┌──────────────────────┐
-│   Chrome Extension   │ ◄──────────────────► │   Swift Backend        │
-│  • xterm.js UI       │    localhost:7681     │  • PTY management      │
-│  • Side panel        │                       │  • WebSocket server    │
-│  • Full tab          │                       │  • Shell spawning      │
-│                      │                       │  • Menu bar app        │
-└─────────────────────┘                        └──────────────────────┘
+                                                ┌──────────────────────┐
+┌─────────────────────┐       WebSocket         │   Swift Backend        │
+│   Chrome Extension   │ ◄──────────────────► │  • PTY management      │
+│  • xterm.js UI       │    localhost:7681     │  • WebSocket server    │
+│  • Side panel        │                       │  • Shell spawning      │
+│  • Full tab          │       WebSocket        │  • MCP HTTP server     │
+│  • DevTools bridge   │ ◄──────────────────► │  • Menu bar app        │
+│    (chrome.debugger) │   MCP control channel  │                        │
+└─────────────────────┘                        └───────────┬────────────┘
+                                                           │ HTTP
+                                               ┌───────────┴────────────┐
+                                               │   MCP Clients            │
+                                               │  (Claude Code, etc.)     │
+                                               │   localhost:7682/mcp     │
+                                               └──────────────────────────┘
 ```
 
 The Swift backend spawns PTY sessions and serves them over WebSocket using
 Network.framework. The Chrome extension renders the terminal using xterm.js and
 connects to the backend. Each tab or panel gets its own independent shell
-session. The backend runs as a macOS menu bar app with no dock icon.
+session. The backend also runs an MCP server on port 7682 that routes tool calls
+through the extension's DevTools bridge to Chrome's debugger API, enabling AI
+tools to inspect and interact with browser tabs. The backend runs as a macOS
+menu bar app with no dock icon.
 
 ## License
 

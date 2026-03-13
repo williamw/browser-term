@@ -8,7 +8,8 @@ Guidelines for AI agents working on this repository.
 lightweight local server written in Swift manages PTY sessions and exposes them
 over WebSocket. The Chrome extension renders the terminal using
 [xterm.js](https://xtermjs.org/) and connects to that local server. The backend
-runs as a macOS menu bar app.
+also includes an MCP server that lets AI tools interact with Chrome tabs via the
+DevTools protocol. The backend runs as a macOS menu bar app.
 
 ## Repository Layout
 
@@ -22,6 +23,7 @@ terminatab/
 │   │   ├── Protocol.swift         # Wire message definitions (JSON)
 │   │   ├── PTY.swift              # PTY session lifecycle (forkpty)
 │   │   ├── SessionManager.swift   # Session manager (maps connection → PTY)
+│   │   ├── MCPServer.swift           # MCP HTTP server (JSON-RPC 2.0, port 7682)
 │   │   ├── WebSocketConnection.swift  # Per-connection WebSocket handler
 │   │   └── WebSocketServer.swift  # WebSocket listener (Network.framework)
 │   └── Tests/TerminatabTests/
@@ -30,7 +32,7 @@ terminatab/
 │       └── SessionManagerTests.swift
 ├── extension/        # Chrome extension (Manifest v3)
 │   ├── manifest.json
-│   ├── background.js       # Service worker; routes icon clicks
+│   ├── background.js       # Service worker; routes icon clicks + MCP control channel
 │   ├── terminal.html       # Full-tab terminal page
 │   ├── sidepanel.html      # Side-panel terminal page
 │   ├── terminal.css
@@ -83,9 +85,9 @@ No build step. Load the `extension/` directory directly into Chrome (see below).
 open Terminatab.app
 ```
 
-Listens on `ws://localhost:7681`. The server runs as a macOS menu bar app (no
-dock icon). The `>_` icon appears in the menu bar; click it and choose **Quit
-Terminatab** to stop.
+Listens on `ws://localhost:7681` (terminal WebSocket) and `http://localhost:7682/mcp`
+(MCP server). The server runs as a macOS menu bar app (no dock icon). The `>_`
+icon appears in the menu bar; click it and choose **Quit Terminatab** to stop.
 
 To view server logs:
 
@@ -140,6 +142,7 @@ are displayed inline on the page.
   (`chrome://extensions` → reload button) and opening `extension/test.html`.
 - Protocol changes (`Protocol.swift`) must be reflected in both the backend handler
   and the extension's `terminal.js`.
+- MCP changes span `MCPServer.swift`, `Protocol.swift`, and `background.js`.
 
 ## Architecture Notes
 
@@ -166,14 +169,30 @@ own file descriptor lifecycle.
 Maps session IDs to PTY instances. Handles session creation, attachment, and
 cleanup. Sessions persist across WebSocket reconnections until explicitly closed.
 
+### MCP server (`MCPServer.swift`)
+
+HTTP server on port 7682 implementing the Model Context Protocol via streamable
+HTTP transport (JSON-RPC 2.0). Exposes four tools: `list_tabs`, `screenshot`,
+`evaluate_javascript`, and `get_page_content`. Tool calls are routed through the
+WebSocket server to the extension's MCP control channel, which executes them via
+`chrome.debugger`. The MCP server is toggled on/off from the menu bar.
+
 ### macOS menu bar app (`App.swift`)
 
 Creates an `NSApplication` with accessory activation policy (no dock icon). Sets
 up an `NSStatusItem` with a template menu bar icon. Starts the WebSocket server
-on launch. The app lifecycle is managed by AppKit's run loop.
+on launch. The menu includes items to toggle MCP DevTools and copy the MCP
+config JSON. The app lifecycle is managed by AppKit's run loop.
 
 ### Extension icon click behavior
 
 `background.js` routes the toolbar icon click: on `http://`/`https://` pages it
 opens the side panel; on all other pages (new tab, `chrome://`, etc.) it opens a
 new terminal tab.
+
+### MCP control channel (`background.js`)
+
+The extension maintains a persistent WebSocket connection to port 7681 as an MCP
+control channel (distinct from terminal connections). When MCP is enabled, the
+extension attaches `chrome.debugger` to all eligible tabs and handles tool
+requests from the backend. A keepalive alarm prevents service worker termination.
