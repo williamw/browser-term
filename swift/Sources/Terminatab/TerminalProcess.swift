@@ -123,17 +123,25 @@ final class TerminalProcess: @unchecked Sendable {
         }
     }
 
-    /// Force the session to end. Closing the master fd causes the kernel to
-    /// deliver SIGHUP to the child's foreground process group on its next I/O.
+    /// Force the session to end. Delegates to SwiftTerm's `terminate()`, which
+    /// closes the `DispatchIO` channel first (its cleanup handler then closes
+    /// the PTY master fd in the correct order) and sends SIGTERM to the child.
+    ///
+    /// We must NOT close `childfd` ourselves. `LocalProcess` keeps a live
+    /// `DispatchIO`/kqueue registration on that fd; closing it out from under
+    /// libdispatch trips "BUG IN CLIENT OF LIBDISPATCH: Unexpected EV_VANISHED
+    /// (do not destroy random mach ports or file descriptors)" and aborts the
+    /// whole process with SIGTRAP.
     func close() {
         lock.lock()
         let alreadyClosed = closed
         closed = true
         lock.unlock()
         if !alreadyClosed && lp.running {
-            // Only close if LocalProcess hasn't already closed the fd internally
-            // (it does so when the child exits naturally and processTerminated fires).
-            Darwin.close(lp.childfd)
+            // Only terminate if LocalProcess hasn't already torn down the fd
+            // internally (it does so when the child exits naturally and
+            // processTerminated fires).
+            lp.terminate()
         }
         finishStream()
     }
